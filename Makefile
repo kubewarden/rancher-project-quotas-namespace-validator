@@ -1,11 +1,19 @@
 SOURCE_FILES := $(shell find . -type f -name '*.go')
 
+CONTAINER_IMAGE = tinygo:patched
+
+# We cannot use the official tinygo container image until
+# this issue is closed: https://github.com/tinygo-org/tinygo/issues/3501
+build-container:
+	DOCKER_BUILDKIT=1 docker build . -t $(CONTAINER_IMAGE)
+
 policy.wasm: $(SOURCE_FILES) go.mod go.sum types_easyjson.go
 	docker run \
 		--rm \
 		-e GOFLAGS="-buildvcs=false" \
 		-v ${PWD}:/src \
-		-w /src tinygo/tinygo:0.23.0 \
+		-w /src \
+		$(CONTAINER_IMAGE) \
 		tinygo build -o policy.wasm -target=wasi -no-debug .
 
 annotated-policy.wasm: policy.wasm metadata.yml
@@ -22,6 +30,12 @@ types_easyjson.go: types.go
 .PHONY: test
 test: types_easyjson.go
 	go test -v
+
+.PHONY: lint
+lint:
+	go vet ./...
+	golangci-lint run
+
 
 .PHONY: e2e-tests
 e2e-tests: annotated-policy.wasm
