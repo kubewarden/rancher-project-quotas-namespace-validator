@@ -7,7 +7,7 @@ import (
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	meta_v1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
-	capabilities "github.com/kubewarden/policy-sdk-go/host_capabilities"
+	capabilities "github.com/kubewarden/policy-sdk-go/capabilities"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 	"github.com/mailru/easyjson"
 )
