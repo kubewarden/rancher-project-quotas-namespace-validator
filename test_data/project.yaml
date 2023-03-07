@@ -1,0 +1,27 @@
+apiVersion: management.cattle.io/v3
+kind: Project
+metadata:
+  generateName: p-
+  name: p-testing
+  namespace: local
+spec:
+  clusterName: local
+  containerDefaultResourceLimit:
+    requestsCpu: 2000m
+  description: ""
+  displayName: test-prj
+  enableProjectMonitoring: false
+  namespaceDefaultResourceQuota:
+    limit:
+      limitsCpu: 200m
+      limitsMemory: 1024Mi
+      requestsCpu: 100m
+  resourceQuota:
+    limit:
+      limitsCpu: 2000m
+      limitsMemory: 2048Mi
+      requestsCpu: 500m
+    usedLimit:
+      limitsCpu: 400m
+      limitsMemory: 1124Mi
+      requestsCpu: 500m
