@@ -1,19 +1,17 @@
 rules:
 - apiGroups: [""]
   apiVersions: ["v1"]
-  resources: ["pods"]
+  resources: ["namespace"]
   operations: ["CREATE"]
 mutating: false
-contextAware: false
+contextAwareResources:
+- apiVersion: management.cattle.io/v3
+  kind: Project
 executionMode: kubewarden-wapc
 annotations:
-  io.kubewarden.policy.title: policy-name
-  io.kubewarden.policy.description: Short description
-  io.kubewarden.policy.author: policy-author
-  io.kubewarden.policy.url: https://github.com/yourorg/policy-name
-  io.kubewarden.policy.source: https://github.com/yourorg/policy-name
+  io.kubewarden.policy.title: rancher-project-quotas-namespace-validator
+  io.kubewarden.policy.description: Prevent the creation of Namespace under a Rancher Project that doesn't have any resource quota left
+  io.kubewarden.policy.author: Flavio Castelli <fcastelli@suse.com>
+  io.kubewarden.policy.url: https://github.com/kubewarden/rancher-project-quotas-namespace-validator
+  io.kubewarden.policy.source: https://github.com/kubewarden/rancher-project-quotas-namespace-validator
   io.kubewarden.policy.license: Apache-2.0
-  io.kubewarden.policy.usage: |
-    Long explaination.
-
-    **Note well:** this can be Markdown text
