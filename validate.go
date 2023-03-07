@@ -4,11 +4,30 @@ import (
 	"fmt"
 	"strings"
 
-	onelog "github.com/francoispqt/onelog"
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
+	meta_v1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
+	capabilities "github.com/kubewarden/policy-sdk-go/host_capabilities"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 	"github.com/mailru/easyjson"
+)
+
+const (
+	// RancherProjectIDAnnotation is the annotation used by Rancher Manager inside of
+	// Namespace object that defines which Project the Namespace belongs to.
+	RancherProjectIDAnnotation = "field.cattle.io/projectId"
+
+	// RancherResourceQuotaAnnotation is the annotation used by Rancher
+	// Manager inside of a Namespace object.
+	// The value is a JSON object holding the `ResourceQuotaLimit` of the
+	// Namespace
+	RancherResourceQuotaAnnotation = "field.cattle.io/resourceQuota"
+
+	// RancherProjectAPIVersion is the Kubernetes Group + Version used by the Project resources
+	RancherProjectAPIVersion = "management.cattle.io/v3"
+
+	// RancherProjectKind is the Kubernetes Kind used by the Project resources
+	RancherProjectKind = "Project"
 )
 
 func validate(payload []byte) ([]byte, error) {
@@ -21,43 +40,128 @@ func validate(payload []byte) ([]byte, error) {
 			kubewarden.Code(400))
 	}
 
-	// Create a Settings instance from the ValidationRequest object
-	settings, err := NewSettingsFromValidationReq(&validationRequest)
+	// Access the **raw** JSON that describes the object
+	namespaceJSON := validationRequest.Request.Object
+
+	// Try to create a Namespace instance using the RAW JSON we got from the
+	// ValidationRequest.
+	namespace := &corev1.Namespace{}
+	if err := easyjson.Unmarshal([]byte(namespaceJSON), namespace); err != nil {
+		return kubewarden.RejectRequest(
+			kubewarden.Message(
+				fmt.Sprintf("Cannot decode Namespace object: %s", err.Error())),
+			kubewarden.Code(400))
+	}
+
+	nsMetadata := &meta_v1.ObjectMeta{}
+	if namespace.Metadata != nil {
+		nsMetadata = namespace.Metadata
+	}
+
+	projectIDAnnotation, found := nsMetadata.Annotations[RancherProjectIDAnnotation]
+	if !found {
+		return kubewarden.AcceptRequest()
+	}
+
+	projectNamespace, projectID, err := parseProjectIDAnnotation(projectIDAnnotation)
 	if err != nil {
 		return kubewarden.RejectRequest(
 			kubewarden.Message(err.Error()),
 			kubewarden.Code(400))
 	}
 
-	// Access the **raw** JSON that describes the object
-	podJSON := validationRequest.Request.Object
-
-	// Try to create a Pod instance using the RAW JSON we got from the
-	// ValidationRequest.
-	pod := &corev1.Pod{}
-	if err := easyjson.Unmarshal([]byte(podJSON), pod); err != nil {
-		return kubewarden.RejectRequest(
-			kubewarden.Message(
-				fmt.Sprintf("Cannot decode Pod object: %s", err.Error())),
-			kubewarden.Code(400))
+	nsResourceQuota := NamespaceResourceQuota{}
+	nsResourceQuotaRaw, found := nsMetadata.Annotations[RancherResourceQuotaAnnotation]
+	if found {
+		if err := easyjson.Unmarshal([]byte(nsResourceQuotaRaw), &nsResourceQuota); err != nil {
+			return kubewarden.RejectRequest(
+				kubewarden.Message(
+					fmt.Sprintf("Cannot decode NamespaceResourceQuota object: %s", err.Error())),
+				kubewarden.Code(400))
+		}
 	}
 
-	logger.DebugWithFields("validating pod object", func(e onelog.Entry) {
-		e.String("name", pod.Metadata.Name)
-		e.String("namespace", pod.Metadata.Namespace)
-	})
-
-	if settings.IsNameDenied(pod.Metadata.Name) {
-		logger.InfoWithFields("rejecting pod object", func(e onelog.Entry) {
-			e.String("name", pod.Metadata.Name)
-			e.String("denied_names", strings.Join(settings.DeniedNames, ","))
-		})
-
+	project, lookupError := findProject(projectID, projectNamespace)
+	if lookupError != nil {
 		return kubewarden.RejectRequest(
-			kubewarden.Message(
-				fmt.Sprintf("The '%s' name is on the deny list", pod.Metadata.Name)),
+			lookupError.Message,
+			lookupError.StatusCode)
+	}
+
+	validationErr := validateQuotas(&project, &nsResourceQuota.Limit)
+	if validationErr != nil {
+		return kubewarden.RejectRequest(
+			kubewarden.Message(validationErr.Error()),
 			kubewarden.NoCode)
 	}
 
 	return kubewarden.AcceptRequest()
+}
+
+// LookupError is a custom error that provides extra information
+type LookupError struct {
+	StatusCode kubewarden.Code
+	Message    kubewarden.Message
+}
+
+func (l *LookupError) Error() string {
+	return fmt.Sprintf("status %d: err %v", l.StatusCode, l.Message)
+}
+
+func findProject(projectID, projectNamespace string) (Project, *LookupError) {
+	project := Project{}
+
+	findPrjReq := capabilities.GetResourceRequest{
+		APIVersion:   RancherProjectAPIVersion,
+		Kind:         RancherProjectKind,
+		Name:         projectID,
+		Namespace:    projectNamespace,
+		DisableCache: true,
+	}
+
+	host := getWapcHost()
+	projectRaw, err := host.GetResource(findPrjReq)
+
+	if err != nil {
+		return project, &LookupError{
+			Message:    kubewarden.Message(fmt.Sprintf("Error retrieving the Project: %v", err)),
+			StatusCode: kubewarden.Code(500),
+		}
+	}
+
+	if len(projectRaw) == 0 {
+		return project, &LookupError{
+			Message:    kubewarden.Message("Project not found"),
+			StatusCode: kubewarden.Code(404),
+		}
+	}
+
+	if err := easyjson.Unmarshal(projectRaw, &project); err != nil {
+		return project, &LookupError{
+			Message:    kubewarden.Message(fmt.Sprintf("Cannot decode Project object: %s", err.Error())),
+			StatusCode: kubewarden.Code(500),
+		}
+	}
+
+	return project, nil
+}
+
+func parseProjectIDAnnotation(annotation string) (projectNamespace string, projectID string, err error) {
+	chunks := strings.Split(annotation, ":")
+	if len(chunks) != 2 {
+		err = fmt.Errorf("Cannot parse projectID annotation: got %d items instead of 2", len(chunks))
+		return
+	}
+
+	if len(chunks[0]) == 0 {
+		err = fmt.Errorf("Project Namespace is empty")
+		return
+	}
+
+	if len(chunks[1]) == 0 {
+		err = fmt.Errorf("Project ID is empty")
+		return
+	}
+
+	return chunks[0], chunks[1], nil
 }
