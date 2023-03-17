@@ -4,7 +4,9 @@
   run kwctl run \
     --allow-context-aware \
     -r test_data/ns_not_valid.json \
+    --replay-host-capabilities-interactions test_data/session.yml \
     annotated-policy.wasm
+
   # this prints the output when one the checks below fails
   echo "output = ${output}"
 
@@ -18,7 +20,9 @@
   run kwctl run \
     --allow-context-aware \
     -r test_data/ns_valid.json \
+    --replay-host-capabilities-interactions test_data/session.yml \
     annotated-policy.wasm
+
   # this prints the output when one the checks below fails
   echo "output = ${output}"
 

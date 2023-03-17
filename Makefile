@@ -46,11 +46,7 @@ e2e-tests-env-destroy:
 
 .PHONY: e2e-tests
 e2e-tests: annotated-policy.wasm
-	@echo WIP
-	exit 0
-	# @echo "Ensure the e2e environment is ready - this can be created via the 'make e2e-tests-env' command"
-	# @echo "The e2e environment can be removed via the 'make e2e-tests-env-destroy' command"
-	# bats e2e.bats
+	bats e2e.bats
 
 .PHONY: clean
 clean:
