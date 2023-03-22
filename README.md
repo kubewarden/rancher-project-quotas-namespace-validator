@@ -26,7 +26,7 @@ Create a project under the Rancher Manager UI:
 - Set Project Limit as `500` and Namespace as Limit as `100`
 - Create
 
-Get the cluster id(eg: local) combined with Project ID(eg: `p-sd7dh`) and enter in below yaml to create namespace with `requestsCpu` as 400m under the project.
+Get the cluster id(e.g., local) combined with Project ID(e.g., `p-sd7dh`) and enter in below yaml to create namespace with `requestsCpu` as 400m under the project.
 
 Create a new Namespace using a definition like the following one:
 
