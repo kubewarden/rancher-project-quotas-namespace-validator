@@ -25,4 +25,4 @@ jobs:
 
     uses: kubewarden/github-actions/.github/workflows/reusable-release-policy-go.yml@v3.0.0
     with:
-      oci-target: ghcr.io/kubewarden/policies/rancher-project-quotas-namespace-validator
+      oci-target: ghcr.io/${{ github.repository_owner }}/policies/rancher-project-quotas-namespace-validator
