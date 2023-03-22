@@ -9,6 +9,12 @@ contextAwareResources:
   kind: Project
 executionMode: kubewarden-wapc
 annotations:
+  # artifacthub specific:
+  io.artifacthub.displayName: Rancher Project quotas namespace validator
+  io.artifacthub.resources: management.cattle.io/Project
+  io.artifacthub.keywords: rancher, project, quotas
+  io.kubewarden.policy.ociUrl: ghcr.io/kubewarden/policies/rancher-project-quotas-namespace-validator
+  # kubewarden specific:
   io.kubewarden.policy.title: rancher-project-quotas-namespace-validator
   io.kubewarden.policy.description: Prevent the creation of Namespace under a Rancher Project that doesn't have any resource quota left
   io.kubewarden.policy.author: Flavio Castelli <fcastelli@suse.com>
