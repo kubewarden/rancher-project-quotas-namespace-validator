@@ -7,7 +7,7 @@
 version: 0.1.0
 name: rancher-project-quotas-namespace-validator
 displayName: Rancher Project quotas namespace validator
-createdAt: 2023-03-22T09:16:36.090377223Z
+createdAt: 2023-03-22T11:02:37.011758177Z
 description: Prevent the creation of Namespace under a Rancher Project that doesn't have any resource quota left
 license: Apache-2.0
 homeURL: https://github.com/kubewarden/rancher-project-quotas-namespace-validator
@@ -29,8 +29,8 @@ install: |
   kwctl pull ghcr.io/kubewarden/policies/rancher-project-quotas-namespace-validator:v0.1.0
   ```
 maintainers:
-- name: Flavio Castelli
-  email: fcastelli@suse.com
+- name: Kubewarden developers
+  email: cncf-kubewarden-maintainers@lists.cncf.io
 provider:
   name: kubewarden
 recommendations:
