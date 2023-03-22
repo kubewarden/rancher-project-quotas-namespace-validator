@@ -1,3 +1,5 @@
+> **WARNING:** this policy requires Kubewarden 1.6.0 or later
+
 This policy is meant to be used together with [Rancher Manager](https://ranchermanager.docs.rancher.com/).
 
 Rancher Manager introduces the concept of `Project`. Projects group different
