@@ -149,7 +149,7 @@ func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 func parseProjectIDAnnotation(annotation string) (projectNamespace string, projectID string, err error) {
 	chunks := strings.Split(annotation, ":")
 	if len(chunks) != 2 {
-		err = fmt.Errorf("Cannot parse projectID annotation: got %d items instead of 2", len(chunks))
+		err = fmt.Errorf("Cannot parse projectID annotation: wrong format")
 		return
 	}
 
