@@ -1,0 +1,5 @@
+run:
+  skip-dirs:
+    # these files are copied from k8s upstream, they have some linting errors
+    # but we don't want to be bothered by them
+    - resource
