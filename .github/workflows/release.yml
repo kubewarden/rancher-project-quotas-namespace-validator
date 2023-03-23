@@ -106,4 +106,4 @@ jobs:
         uses: kubewarden/github-actions/policy-release@v3.0.4
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          oci-target: ${{ inputs.oci-target }}
+          oci-target: ghcr.io/${{ github.repository_owner }}/policies/rancher-project-quotas-namespace-validator
