@@ -8,7 +8,7 @@
 package main
 
 import (
-	capabilities "github.com/kubewarden/policy-sdk-go/capabilities"
+	capabilities "github.com/kubewarden/policy-sdk-go/pkg/capabilities"
 )
 
 func getWapcHost() capabilities.Host {
