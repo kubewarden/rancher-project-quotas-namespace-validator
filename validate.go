@@ -7,7 +7,7 @@ import (
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	meta_v1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
-	capabilities "github.com/kubewarden/policy-sdk-go/capabilities"
+	"github.com/kubewarden/policy-sdk-go/pkg/capabilities/kubernetes"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 	"github.com/mailru/easyjson"
 )
@@ -111,7 +111,7 @@ func (l *LookupError) Error() string {
 func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 	project := Project{}
 
-	findPrjReq := capabilities.GetResourceRequest{
+	findPrjReq := kubernetes.GetResourceRequest{
 		APIVersion:   RancherProjectAPIVersion,
 		Kind:         RancherProjectKind,
 		Name:         projectID,
@@ -120,7 +120,7 @@ func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 	}
 
 	host := getWapcHost()
-	projectRaw, err := host.GetResource(findPrjReq)
+	projectRaw, err := kubernetes.GetResource(&host, findPrjReq)
 
 	if err != nil {
 		return project, &LookupError{

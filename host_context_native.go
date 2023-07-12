@@ -7,7 +7,7 @@ package main
 import (
 	"fmt"
 
-	capabilities "github.com/kubewarden/policy-sdk-go/capabilities"
+	capabilities "github.com/kubewarden/policy-sdk-go/pkg/capabilities"
 )
 
 // MockWapcClient is implements the `host.WapcClient` interface.

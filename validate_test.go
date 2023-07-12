@@ -8,7 +8,7 @@ import (
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	metav1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
-	"github.com/kubewarden/policy-sdk-go/capabilities"
+	"github.com/kubewarden/policy-sdk-go/pkg/capabilities/kubernetes"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 	kubewarden_testing "github.com/kubewarden/policy-sdk-go/testing"
 	easyjson "github.com/mailru/easyjson"
@@ -79,7 +79,7 @@ func TestValidation(t *testing.T) {
 		}
 
 		wapcPayloadValidatorFn := func(payload []byte) error {
-			req := capabilities.GetResourceRequest{}
+			req := kubernetes.GetResourceRequest{}
 			if err := json.Unmarshal(payload, &req); err != nil {
 				return fmt.Errorf("cannot unmarshal payload into GetResourceRequest: %w", err)
 			}
