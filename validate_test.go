@@ -11,7 +11,6 @@ import (
 	"github.com/kubewarden/policy-sdk-go/pkg/capabilities/kubernetes"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 	kubewarden_testing "github.com/kubewarden/policy-sdk-go/testing"
-	easyjson "github.com/mailru/easyjson"
 )
 
 func TestValidation(t *testing.T) {
@@ -137,7 +136,7 @@ func TestValidation(t *testing.T) {
 		}
 
 		var response kubewarden_protocol.ValidationResponse
-		if err := easyjson.Unmarshal(responsePayload, &response); err != nil {
+		if err := json.Unmarshal(responsePayload, &response); err != nil {
 			t.Errorf("Unexpected error: %+v", err)
 		}
 

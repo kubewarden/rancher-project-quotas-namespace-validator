@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"strings"
+  "encoding/json"
 
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	meta_v1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 	"github.com/kubewarden/policy-sdk-go/pkg/capabilities/kubernetes"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
-	"github.com/mailru/easyjson"
 )
 
 const (
@@ -33,7 +33,7 @@ const (
 func validate(payload []byte) ([]byte, error) {
 	// Create a ValidationRequest instance from the incoming payload
 	validationRequest := kubewarden_protocol.ValidationRequest{}
-	err := easyjson.Unmarshal(payload, &validationRequest)
+	err := json.Unmarshal(payload, &validationRequest)
 	if err != nil {
 		return kubewarden.RejectRequest(
 			kubewarden.Message(err.Error()),
@@ -46,7 +46,7 @@ func validate(payload []byte) ([]byte, error) {
 	// Try to create a Namespace instance using the RAW JSON we got from the
 	// ValidationRequest.
 	namespace := &corev1.Namespace{}
-	if err := easyjson.Unmarshal([]byte(namespaceJSON), namespace); err != nil {
+	if err := json.Unmarshal([]byte(namespaceJSON), namespace); err != nil {
 		return kubewarden.RejectRequest(
 			kubewarden.Message(
 				fmt.Sprintf("Cannot decode Namespace object: %s", err.Error())),
@@ -73,7 +73,7 @@ func validate(payload []byte) ([]byte, error) {
 	nsResourceQuota := NamespaceResourceQuota{}
 	nsResourceQuotaRaw, found := nsMetadata.Annotations[RancherResourceQuotaAnnotation]
 	if found {
-		if err := easyjson.Unmarshal([]byte(nsResourceQuotaRaw), &nsResourceQuota); err != nil {
+		if err := json.Unmarshal([]byte(nsResourceQuotaRaw), &nsResourceQuota); err != nil {
 			return kubewarden.RejectRequest(
 				kubewarden.Message(
 					fmt.Sprintf("Cannot decode NamespaceResourceQuota object: %s", err.Error())),
@@ -136,7 +136,7 @@ func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 		}
 	}
 
-	if err := easyjson.Unmarshal(projectRaw, &project); err != nil {
+	if err := json.Unmarshal(projectRaw, &project); err != nil {
 		return project, &LookupError{
 			Message:    kubewarden.Message(fmt.Sprintf("Cannot decode Project object: %s", err.Error())),
 			StatusCode: kubewarden.Code(500),
