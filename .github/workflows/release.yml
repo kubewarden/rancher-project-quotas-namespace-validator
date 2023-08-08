@@ -11,7 +11,7 @@ jobs:
 
   test:
     name: run tests and linters
-    uses: kubewarden/github-actions/.github/workflows/reusable-test-policy-go.yml@v3.1.4
+    uses: kubewarden/github-actions/.github/workflows/reusable-test-policy-go.yml@v3.1.7
 
   release:
     needs: test
@@ -33,7 +33,7 @@ jobs:
     steps:
       -
         name: Install dependencies
-        uses: kubewarden/github-actions/policy-gh-action-dependencies@v3.1.4
+        uses: kubewarden/github-actions/policy-gh-action-dependencies@v3.1.7
       -
         uses: actions/checkout@v3
         with:
@@ -43,8 +43,8 @@ jobs:
         name: Install patched tinygo
         shell: bash
         run: |
-          wget https://github.com/tinygo-org/tinygo/releases/download/v0.27.0/tinygo_0.27.0_amd64.deb
-          sudo dpkg -i tinygo_0.27.0_amd64.deb
+          wget https://github.com/tinygo-org/tinygo/releases/download/v0.28.1/tinygo_0.28.1_amd64.deb
+          sudo dpkg -i tinygo_0.28.1_amd64.deb
           wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/libclang_rt.builtins-wasm32-wasi-16.0.tar.gz
           tar xvf libclang_rt.builtins-wasm32-wasi-16.0.tar.gz
           sudo cp lib/wasi/libclang_rt.builtins-wasm32.a /usr/local/lib/tinygo/lib/wasi-libc/sysroot/lib/wasm32-wasi/
@@ -58,7 +58,7 @@ jobs:
       -
         name: Check that artifacthub-pkg.yml is up-to-date
         if: ${{ inputs.artifacthub }}
-        uses: kubewarden/github-actions/check-artifacthub@v3.1.4
+        uses: kubewarden/github-actions/check-artifacthub@v3.1.7
         with:
           version: ${{ steps.calculate-version.outputs.version }}
       -
@@ -103,7 +103,7 @@ jobs:
           make e2e-tests
       -
         name: Release
-        uses: kubewarden/github-actions/policy-release@v3.1.4
+        uses: kubewarden/github-actions/policy-release@v3.1.7
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           oci-target: ghcr.io/${{ github.repository_owner }}/policies/rancher-project-quotas-namespace-validator
