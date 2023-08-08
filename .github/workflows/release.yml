@@ -33,7 +33,7 @@ jobs:
     steps:
       -
         name: Install dependencies
-        uses: kubewarden/github-actions/policy-gh-action-dependencies@v3.1.7
+        uses: kubewarden/github-actions/policy-gh-action-dependencies@v3.1.9
       -
         uses: actions/checkout@v3
         with:
@@ -58,7 +58,7 @@ jobs:
       -
         name: Check that artifacthub-pkg.yml is up-to-date
         if: ${{ inputs.artifacthub }}
-        uses: kubewarden/github-actions/check-artifacthub@v3.1.7
+        uses: kubewarden/github-actions/check-artifacthub@v3.1.9
         with:
           version: ${{ steps.calculate-version.outputs.version }}
       -
@@ -103,7 +103,7 @@ jobs:
           make e2e-tests
       -
         name: Release
-        uses: kubewarden/github-actions/policy-release@v3.1.7
+        uses: kubewarden/github-actions/policy-release@v3.1.9
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           oci-target: ghcr.io/${{ github.repository_owner }}/policies/rancher-project-quotas-namespace-validator
