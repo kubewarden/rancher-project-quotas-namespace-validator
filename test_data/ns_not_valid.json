@@ -5,15 +5,38 @@
     "kind": "Namespace",
     "version": "v1"
   },
+  "resource": {
+    "group": "",
+    "version": "v1",
+    "resource": "namespaces"
+  },
+  "requestKind": {
+    "group": "",
+    "version": "v1",
+    "kind": "Namespace"
+  },
+  "requestResource": {
+    "group": "",
+    "version": "v1",
+    "resource": "namespaces"
+  },
+  "name": "one",
+  "operation": "CREATE",
+  "userInfo": {
+    "username": "kubernetes-admin",
+    "groups": [
+      "system:masters",
+      "system:authenticated"
+    ]
+  },
   "object": {
     "metadata": {
       "name": "one",
-      "annotations" : {
+      "annotations": {
         "field.cattle.io/resourceQuota": "{\"limit\":{\"requestsCpu\":\"100m\",\"limitsCpu\":\"200m\",\"limitsMemory\":\"4Gi\"}}",
         "field.cattle.io/projectId": "local:p-testing"
       }
     },
-    "spec": {
-    }
+    "spec": {}
   }
 }
