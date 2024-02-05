@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
-  "encoding/json"
 
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	meta_v1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
@@ -115,7 +115,7 @@ func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 		APIVersion:   RancherProjectAPIVersion,
 		Kind:         RancherProjectKind,
 		Name:         projectID,
-		Namespace:    projectNamespace,
+		Namespace:    &projectNamespace,
 		DisableCache: true,
 	}
 
