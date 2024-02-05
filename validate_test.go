@@ -87,8 +87,8 @@ func TestValidation(t *testing.T) {
 				return fmt.Errorf("Looking for the wrong Project name: %s instead of %s", req.Name, projectID)
 			}
 
-			if projectNs != req.Namespace {
-				return fmt.Errorf("Looking for the wrong Project namespace: %s instead of %s", req.Namespace, projectNs)
+			if projectNs != *req.Namespace {
+				return fmt.Errorf("Looking for the wrong Project namespace: %s instead of %s", *req.Namespace, projectNs)
 			}
 
 			if req.APIVersion != RancherProjectAPIVersion {
