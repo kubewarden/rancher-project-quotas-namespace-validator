@@ -1,5 +1,4 @@
 name: Tests and linters
-
 on:
   workflow_call:
     inputs:
@@ -29,19 +28,27 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Install dependencies
-        uses: kubewarden/github-actions/policy-gh-action-dependencies@v3.1.14
-      - name: Install patched tinygo
+        uses: kubewarden/github-actions/policy-gh-action-dependencies@v3.1.16
+      # TinyGo requires the official Go compiler to be installed
+      # Ensure latest stable release is available, do not rely on what
+      # is provided out of the box by  the GH runner
+      - name: setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+      - name: Install tinygo
         shell: bash
         run: |
-          wget https://github.com/tinygo-org/tinygo/releases/download/v0.28.1/tinygo_0.28.1_amd64.deb
-          sudo dpkg -i tinygo_0.28.1_amd64.deb
-          wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/libclang_rt.builtins-wasm32-wasi-16.0.tar.gz
-          tar xvf libclang_rt.builtins-wasm32-wasi-16.0.tar.gz
-          sudo cp lib/wasi/libclang_rt.builtins-wasm32.a /usr/local/lib/tinygo/lib/wasi-libc/sysroot/lib/wasm32-wasi/
-          sudo cp wasi-gh-action.json /usr/local/lib/tinygo/targets/wasi.json
+          wget https://github.com/tinygo-org/tinygo/releases/download/v0.30.0/tinygo_0.30.0_amd64.deb
+          sudo dpkg -i tinygo_0.30.0_amd64.deb
       - name: Build Wasm module
         shell: bash
         run: |
+          # we have to remove the wasm-opt binary bundled with the tinygo package,
+          # this will lead to our binary being used (the one installed by the `policy-gh-action-dependencies`
+          # step)
+          sudo rm /usr/local/lib/tinygo/bin/wasm-opt
+          wasm-opt --version
           tinygo build -o policy.wasm -target=wasi -no-debug .
       - name: Annotate Wasm module
         shell: bash
@@ -71,12 +78,12 @@ jobs:
           # until https://github.com/actions/checkout/pull/579 is released
           fetch-depth: 0
       - name: Install kwctl
-        uses: kubewarden/github-actions/kwctl-installer@v3.1.14
+        uses: kubewarden/github-actions/kwctl-installer@v3.1.16
       - id: calculate-version
         run: echo "version=$(git describe --tags --abbrev=0 | cut -c2-)" >> $GITHUB_OUTPUT
         shell: bash
       - name: Check that artifacthub-pkg.yml is up-to-date
-        uses: kubewarden/github-actions/check-artifacthub@v3.1.14
+        uses: kubewarden/github-actions/check-artifacthub@v3.1.16
         with:
           version: ${{ steps.calculate-version.outputs.version }}
           check_version: false # must match a git tag that hasn't been created yet, so let's ignore until then
