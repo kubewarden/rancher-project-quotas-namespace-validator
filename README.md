@@ -1,3 +1,6 @@
+[![Kubewarden Policy Repository](https://github.com/kubewarden/community/blob/main/badges/kubewarden-policies.svg)](https://github.com/kubewarden/community/blob/main/REPOSITORIES.md#policy-scope)
+[![Stable](https://img.shields.io/badge/status-stable-brightgreen?style=for-the-badge)](https://github.com/kubewarden/community/blob/main/REPOSITORIES.md#stable)
+
 > **WARNING:** this policy requires Kubewarden 1.6.0 or later
 
 This policy is meant to be used together with [Rancher Manager](https://ranchermanager.docs.rancher.com/).
