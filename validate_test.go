@@ -9,6 +9,7 @@ import (
 	metav1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
 	"github.com/kubewarden/policy-sdk-go/pkg/capabilities/kubernetes"
+	"github.com/kubewarden/policy-sdk-go/pkg/capabilities/mocks"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 	kubewarden_testing "github.com/kubewarden/policy-sdk-go/testing"
 )
@@ -77,31 +78,6 @@ func TestValidation(t *testing.T) {
 			},
 		}
 
-		wapcPayloadValidatorFn := func(payload []byte) error {
-			req := kubernetes.GetResourceRequest{}
-			if err := json.Unmarshal(payload, &req); err != nil {
-				return fmt.Errorf("cannot unmarshal payload into GetResourceRequest: %w", err)
-			}
-
-			if projectID != req.Name {
-				return fmt.Errorf("Looking for the wrong Project name: %s instead of %s", req.Name, projectID)
-			}
-
-			if projectNs != req.Namespace {
-				return fmt.Errorf("Looking for the wrong Project namespace: %s instead of %s", req.Namespace, projectNs)
-			}
-
-			if req.APIVersion != RancherProjectAPIVersion {
-				return fmt.Errorf("Wrong APIVersion for project: %s", req.APIVersion)
-			}
-
-			if req.Kind != RancherProjectKind {
-				return fmt.Errorf("Wrong Kind for project: %s", req.Kind)
-			}
-
-			return nil
-		}
-
 		project := Project{
 			Metadata: &metav1.ObjectMeta{
 				Name:      projectID,
@@ -113,17 +89,26 @@ func TestValidation(t *testing.T) {
 				ResourceQuota: &tc.projectResourceQuota,
 			},
 		}
-		projectJSON, err := json.Marshal(&project)
+
+		request, err := json.Marshal(&kubernetes.GetResourceRequest{
+			APIVersion:   RancherProjectAPIVersion,
+			Kind:         RancherProjectKind,
+			Name:         projectID,
+			Namespace:    &projectNs,
+			DisableCache: true,
+		})
+		if err != nil {
+			t.Errorf("cannot marshall request: %v", err)
+		}
+
+		wapcResponse, err := json.Marshal(&project)
 		if err != nil {
 			t.Errorf("cannot create mock client with a Project as payload: %v", err)
 		}
+		mockWapcClient := &mocks.MockWapcClient{}
+		mockWapcClient.On("HostCall", "kubewarden", "kubernetes", "get_resource", request).Return(wapcResponse, nil)
 
-		mockWapcClient = &MockWapcClient{
-			Err:                 nil,
-			PayloadResponse:     projectJSON,
-			Operation:           "get_resource",
-			PayloadValidationFn: &wapcPayloadValidatorFn,
-		}
+		host.Client = mockWapcClient
 
 		payload, err := kubewarden_testing.BuildValidationRequest(&namespace, &settings)
 		if err != nil {
@@ -155,49 +140,16 @@ func TestValidation(t *testing.T) {
 }
 
 func TestFindProject(t *testing.T) {
-	aListOfStrings := []string{"not", "a", "project"}
-	aListOfStringsJSON, err := json.Marshal(&aListOfStrings)
-	if err != nil {
-		t.Errorf("cannot create mock client with a list of strings as payload: %v", err)
-	}
-	mockClientWithAWrongPayload := MockWapcClient{
-		PayloadResponse: aListOfStringsJSON,
-		Err:             nil,
-		Operation:       "get_resource",
-	}
-
-	aProject := Project{
-		Metadata: &metav1.ObjectMeta{
-			Name:      "a-project",
-			Namespace: "a-namespace",
-		},
-		Spec: &ProjectSpec{
-			DisplayName: "a project",
-			Description: "something used by the tests",
-		},
-	}
-	aProjectJSON, err := json.Marshal(&aProject)
-	if err != nil {
-		t.Errorf("cannot create mock client with a Project as payload: %v", err)
-	}
-	mockClientWithGoodPayload := MockWapcClient{
-		PayloadResponse: aProjectJSON,
-		Err:             nil,
-		Operation:       "get_resource",
-	}
-
 	cases := []struct {
 		desc           string
-		mockWapcClient MockWapcClient
+		responseObject interface{}
+		responseError  error
 		expectError    *LookupError
 	}{
 		{
 			"No project found",
-			MockWapcClient{
-				Err:             nil,
-				PayloadResponse: []byte{},
-				Operation:       "get_resource",
-			},
+			nil,
+			nil,
 			&LookupError{
 				StatusCode: kubewarden.Code(404),
 				Message:    kubewarden.Message("not relevant"),
@@ -205,11 +157,8 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			"waPC host error",
-			MockWapcClient{
-				Err:             fmt.Errorf("something went wrong with waPC host"),
-				PayloadResponse: []byte{},
-				Operation:       "get_resource",
-			},
+			[]byte{},
+			fmt.Errorf("something went wrong with waPC host"),
 			&LookupError{
 				StatusCode: kubewarden.Code(500),
 				Message:    kubewarden.Message("not relevant"),
@@ -217,7 +166,8 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			"cannot unmarshal project",
-			mockClientWithAWrongPayload,
+			[]string{"not", "a", "project"},
+			nil,
 			&LookupError{
 				StatusCode: kubewarden.Code(500),
 				Message:    kubewarden.Message("not relevant"),
@@ -225,15 +175,49 @@ func TestFindProject(t *testing.T) {
 		},
 		{
 			"project found",
-			mockClientWithGoodPayload,
+			&Project{
+				Metadata: &metav1.ObjectMeta{
+					Name:      "a-project",
+					Namespace: "a-namespace",
+				},
+				Spec: &ProjectSpec{
+					DisplayName: "a project",
+					Description: "something used by the tests",
+				},
+			},
+			nil,
 			nil,
 		},
 	}
 
 	for _, tc := range cases {
-		mockWapcClient = &tc.mockWapcClient
+		projectID := "proj-id"
+		projectNs := "proj-ns"
 
-		_, lookupErr := findProject("prj1", "local")
+		request, err := json.Marshal(&kubernetes.GetResourceRequest{
+			APIVersion:   RancherProjectAPIVersion,
+			Kind:         RancherProjectKind,
+			Name:         projectID,
+			Namespace:    &projectNs,
+			DisableCache: true,
+		})
+		if err != nil {
+			t.Errorf("cannot marshall request: %v", err)
+		}
+
+		wapcResponse := []byte{}
+		if tc.responseObject != nil {
+			wapcResponse, err = json.Marshal(tc.responseObject)
+			if err != nil {
+				t.Errorf("cannot create mock client with a Project as payload: %v", err)
+			}
+		}
+
+		mockWapcClient := &mocks.MockWapcClient{}
+		mockWapcClient.On("HostCall", "kubewarden", "kubernetes", "get_resource", request).Return(wapcResponse, tc.responseError)
+		host.Client = mockWapcClient
+
+		_, lookupErr := findProject(projectID, projectNs)
 
 		if lookupErr == nil && tc.expectError != nil {
 			t.Errorf("%s - didn't get an error as expected", tc.desc)

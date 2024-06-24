@@ -1,5 +1,5 @@
 # Run tests
-test: fmt vet generate-mocks
+test: fmt vet
 	go test ./... -coverprofile cover.out
 
 # Run go fmt against code
@@ -15,6 +15,7 @@ lint:
 
 deps:
 	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+	go install github.com/vektra/mockery/v2@v2.43.2
 
 generate-mocks:
-	docker run --rm -v ${PWD}:/src -w /src golang:1.20-alpine ./hack/generate-mocks.sh
+	mockery
