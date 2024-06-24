@@ -8,6 +8,7 @@ import (
 	corev1 "github.com/kubewarden/k8s-objects/api/core/v1"
 	meta_v1 "github.com/kubewarden/k8s-objects/apimachinery/pkg/apis/meta/v1"
 	kubewarden "github.com/kubewarden/policy-sdk-go"
+	"github.com/kubewarden/policy-sdk-go/pkg/capabilities"
 	"github.com/kubewarden/policy-sdk-go/pkg/capabilities/kubernetes"
 	kubewarden_protocol "github.com/kubewarden/policy-sdk-go/protocol"
 )
@@ -29,6 +30,8 @@ const (
 	// RancherProjectKind is the Kubernetes Kind used by the Project resources
 	RancherProjectKind = "Project"
 )
+
+var host = capabilities.NewHost()
 
 func validate(payload []byte) ([]byte, error) {
 	// Create a ValidationRequest instance from the incoming payload
@@ -119,7 +122,6 @@ func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 		DisableCache: true,
 	}
 
-	host := getWapcHost()
 	projectRaw, err := kubernetes.GetResource(&host, findPrjReq)
 
 	if err != nil {
