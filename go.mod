@@ -2,7 +2,7 @@ module github.com/kubewarden/rancher-project-quotas-namespace-validator
 
 go 1.22
 
-toolchain go1.22.5
+toolchain go1.22.6
 
 replace github.com/go-openapi/strfmt => github.com/kubewarden/strfmt v0.1.3
 
