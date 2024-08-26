@@ -1,7 +1,7 @@
 SOURCE_FILES := $(shell find . -type f -name '*.go')
 VERSION := $(shell git describe | cut -c2-)
 
-CONTAINER_IMAGE = "tinygo/tinygo:0.32.0"
+CONTAINER_IMAGE = "tinygo/tinygo:0.33.0"
 
 policy.wasm: $(SOURCE_FILES) go.mod go.sum
 	docker run \
