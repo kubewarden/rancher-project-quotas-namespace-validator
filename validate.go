@@ -123,7 +123,6 @@ func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 	}
 
 	projectRaw, err := kubernetes.GetResource(&host, findPrjReq)
-
 	if err != nil {
 		return project, &LookupError{
 			Message:    kubewarden.Message(fmt.Sprintf("Error retrieving the Project: %v", err)),
@@ -151,7 +150,7 @@ func findProject(projectID, projectNamespace string) (Project, *LookupError) {
 func parseProjectIDAnnotation(annotation string) (projectNamespace string, projectID string, err error) {
 	chunks := strings.Split(annotation, ":")
 	if len(chunks) != 2 {
-		err = fmt.Errorf("Cannot parse projectID annotation: wrong format")
+		err = fmt.Errorf("cannot parse projectID annotation: wrong format")
 		return
 	}
 
